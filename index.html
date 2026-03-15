@@ -9,7 +9,7 @@
     #status { color:#0f0; text-align:center; font-family:Arial; margin:10px; }
   </style>
   
-  <!-- 🔥 Latest Firebase Compat SDK (v12.10.0 - March 2026) -->
+  <!-- 🔥 Latest Firebase SDK v12.10.0 (March 2026) -->
   <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-database-compat.js"></script>
 </head>
@@ -22,18 +22,17 @@
     const ctx = canvas.getContext('2d');
     const status = document.getElementById('status');
 
-    // ==================== YOUR CONFIG (already filled) ====================
+    // YOUR FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyAVKmz6_vdH0-WajGCagI7BTvUS63Ydzhg",
       authDomain: "nopes-game.firebaseapp.com",
-      databaseURL: "https://nopes-game.firebaseio.com",   // ← REQUIRED for Realtime Database
+      databaseURL: "https://nopes-game.firebaseio.com",
       projectId: "nopes-game",
       storageBucket: "nopes-game.firebasestorage.app",
       messagingSenderId: "422391323876",
       appId: "1:422391323876:web:ff532f5a18ed80d88320f1",
       measurementId: "G-FKWJWHBDV8"
     };
-    // =================================================================
 
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -46,13 +45,11 @@
 
     let players = {};
 
-    // Real-time sync
     playersRef.on('value', (snapshot) => {
       players = snapshot.val() || {};
       status.textContent = `✅ Connected! ${Object.keys(players).length} players online`;
     });
 
-    // Clean up when you close the tab
     playersRef.child(myId).onDisconnect().remove();
 
     const keys = {};
@@ -60,11 +57,7 @@
     window.addEventListener('keyup', e => keys[e.key] = false);
 
     function updateMyPosition() {
-      playersRef.child(myId).set({
-        x: playerX,
-        y: playerY,
-        color: myColor
-      });
+      playersRef.child(myId).set({ x: playerX, y: playerY, color: myColor });
     }
 
     function gameLoop() {
@@ -79,7 +72,6 @@
 
       if (moved) updateMyPosition();
 
-      // Draw all players
       for (let id in players) {
         const p = players[id];
         ctx.fillStyle = p.color;
