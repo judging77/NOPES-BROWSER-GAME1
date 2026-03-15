@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Online Multiplayer Game</title>
+  <style>
+    body { margin:0; background:#000; overflow:hidden; }
+    canvas { display:block; margin:40px auto; border:2px solid #333; }
+    #status { color:#0f0; text-align:center; font-family:Arial; margin:10px; }
+  </style>
+  
+  <!-- 🔥 Latest Firebase Compat SDK (v12.10.0 - March 2026) -->
+  <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h2 id="status">Connecting to Firebase...</h2>
+  <canvas id="game" width="800" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+
+    // ==================== YOUR CONFIG (already filled) ====================
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVKmz6_vdH0-WajGCagI7BTvUS63Ydzhg",
+      authDomain: "nopes-game.firebaseapp.com",
+      databaseURL: "https://nopes-game.firebaseio.com",   // ← REQUIRED for Realtime Database
+      projectId: "nopes-game",
+      storageBucket: "nopes-game.firebasestorage.app",
+      messagingSenderId: "422391323876",
+      appId: "1:422391323876:web:ff532f5a18ed80d88320f1",
+      measurementId: "G-FKWJWHBDV8"
+    };
+    // =================================================================
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const playersRef = db.ref('players');
+
+    let myId = 'player-' + Math.random().toString(36).substr(2, 9);
+    let myColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+    let playerX = 400, playerY = 300;
+    let speed = 5;
+
+    let players = {};
+
+    // Real-time sync
+    playersRef.on('value', (snapshot) => {
+      players = snapshot.val() || {};
+      status.textContent = `✅ Connected! ${Object.keys(players).length} players online`;
+    });
+
+    // Clean up when you close the tab
+    playersRef.child(myId).onDisconnect().remove();
+
+    const keys = {};
+    window.addEventListener('keydown', e => keys[e.key] = true);
+    window.addEventListener('keyup', e => keys[e.key] = false);
+
+    function updateMyPosition() {
+      playersRef.child(myId).set({
+        x: playerX,
+        y: playerY,
+        color: myColor
+      });
+    }
+
+    function gameLoop() {
+      ctx.fillStyle = '#111';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      let moved = false;
+      if (keys['ArrowLeft'] || keys['a']) { playerX -= speed; moved = true; }
+      if (keys['ArrowRight'] || keys['d']) { playerX += speed; moved = true; }
+      if (keys['ArrowUp'] || keys['w']) { playerY -= speed; moved = true; }
+      if (keys['ArrowDown'] || keys['s']) { playerY += speed; moved = true; }
+
+      if (moved) updateMyPosition();
+
+      // Draw all players
+      for (let id in players) {
+        const p = players[id];
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 40, 40);
+        if (id === myId) {
+          ctx.fillStyle = 'lime';
+          ctx.font = '12px Arial';
+          ctx.fillText('YOU', p.x + 5, p.y - 5);
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
